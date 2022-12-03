@@ -27,14 +27,13 @@ public:
     }
 
     void setData (std::vector<Swimmer*> &swimmers, int time, std::vector<std::string> &res, int num) {
-        std::mutex access;
+
         for (int i = 0;swimmers[num] != nullptr;i++) {
             int dist;
             dist = speed * time;
             setDistance(dist);
             setTime(time);
             time++;
-            access.lock();
             if (dist >= 100) {
                 std::cout << name << " finished" << std::endl;
                 record(res);
@@ -43,7 +42,6 @@ public:
             } else {
                 show();
             }
-            access.unlock();
         }
     }
 
@@ -81,10 +79,15 @@ void initSwimmers (std::vector<Swimmer*> &swimmers) {
 
 void createThreads (std::vector<Swimmer*> &swimmers, std::vector<std::string> &res, int &time) {
     std::thread sw1 (&Swimmer::setData,swimmers[0], std::ref(swimmers), time, std::ref(res), 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     std::thread sw2 (&Swimmer::setData,swimmers[1], std::ref(swimmers), time, std::ref(res), 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     std::thread sw3 (&Swimmer::setData,swimmers[2], std::ref(swimmers), time, std::ref(res),  2);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     std::thread sw4 (&Swimmer::setData,swimmers[3], std::ref(swimmers), time, std::ref(res), 3);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     std::thread sw5 (&Swimmer::setData,swimmers[4], std::ref(swimmers), time, std::ref(res), 4);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     std::thread sw6 (&Swimmer::setData,swimmers[5], std::ref(swimmers), time, std::ref(res), 5);
     sw1.join();
     sw2.join();
