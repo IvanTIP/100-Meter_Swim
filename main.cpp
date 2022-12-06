@@ -3,6 +3,8 @@
 #include<vector>
 #include<mutex>
 
+std::mutex access;
+
 class Swimmer {
 private:
     std::string name = "unknown";
@@ -10,7 +12,7 @@ private:
     int distance = 0;
     int time = 0;
 public:
-    void setName (std::string inName) {
+    void setName (std::string &inName) {
         name = inName;
     }
 
@@ -18,27 +20,16 @@ public:
         speed = inSpeed;
     }
 
-    void setDistance (int inDist) {
-        distance = inDist;
-    }
-
-    void setTime (int inTime) {
-        time = inTime;
-    }
-
-    void setData (std::vector<Swimmer*> &swimmers, int time, std::vector<std::string> &res, int num) {
-
-        for (int i = 0;swimmers[num] != nullptr;i++) {
-            int dist;
-            dist = speed * time;
-            setDistance(dist);
-            setTime(time);
+    void setData (std::vector<Swimmer*> &swimmers, std::vector<std::string> &res) {
+        while (true) {
+            distance = speed * time;
             time++;
-            if (dist >= 100) {
+            if (distance >= 100) {
                 std::cout << name << " finished" << std::endl;
+                access.lock();
                 record(res);
-                delete swimmers[num];
-                swimmers[num] = nullptr;
+                access.unlock();
+                break;
             } else {
                 show();
             }
@@ -77,18 +68,19 @@ void initSwimmers (std::vector<Swimmer*> &swimmers) {
     }
 }
 
-void createThreads (std::vector<Swimmer*> &swimmers, std::vector<std::string> &res, int &time) {
-    std::thread sw1 (&Swimmer::setData,swimmers[0], std::ref(swimmers), time, std::ref(res), 0);
+void createThreads (std::vector<Swimmer*> &swimmers, std::vector<std::string> &res) {
+
+    std::thread sw1 (&Swimmer::setData,swimmers[0], std::ref(swimmers), std::ref(res));
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    std::thread sw2 (&Swimmer::setData,swimmers[1], std::ref(swimmers), time, std::ref(res), 1);
+    std::thread sw2 (&Swimmer::setData,swimmers[1], std::ref(swimmers), std::ref(res));
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    std::thread sw3 (&Swimmer::setData,swimmers[2], std::ref(swimmers), time, std::ref(res),  2);
+    std::thread sw3 (&Swimmer::setData,swimmers[2], std::ref(swimmers), std::ref(res));
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    std::thread sw4 (&Swimmer::setData,swimmers[3], std::ref(swimmers), time, std::ref(res), 3);
+    std::thread sw4 (&Swimmer::setData,swimmers[3], std::ref(swimmers), std::ref(res));
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    std::thread sw5 (&Swimmer::setData,swimmers[4], std::ref(swimmers), time, std::ref(res), 4);
+    std::thread sw5 (&Swimmer::setData,swimmers[4], std::ref(swimmers), std::ref(res));
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    std::thread sw6 (&Swimmer::setData,swimmers[5], std::ref(swimmers), time, std::ref(res), 5);
+    std::thread sw6 (&Swimmer::setData,swimmers[5], std::ref(swimmers), std::ref(res));
     sw1.join();
     sw2.join();
     sw3.join();
@@ -97,13 +89,20 @@ void createThreads (std::vector<Swimmer*> &swimmers, std::vector<std::string> &r
     sw6.join();
 }
 
+void clear (std::vector<Swimmer*> &swimmers) {
+    for (int i = 0;i < 6;i++) {
+        delete swimmers[i];
+        swimmers[i] = nullptr;
+    }
+}
+
 int main()
 {
     std::vector<std::string> res;
     std::vector<Swimmer*> swimmers;
-    int time = 0;
     initSwimmers(swimmers);
-    createThreads(swimmers, res, time);
+    createThreads(swimmers, res);
     showResult(res);
+    clear(swimmers);
     return 0;
 }
